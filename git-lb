@@ -1,0 +1,90 @@
+#!/bin/sh
+
+git_alias_lb() {
+	# Print reverse of git log --graph --branches --color=always.
+
+	# Determine amount of padding to achieve vertical alignment.
+	indent=1
+	while :
+	do
+		i1=$((2 * $indent + 1))
+		i2=$((2 * $indent + 7))
+
+		stdin=$(git log --graph --branches --abbrev-commit --date="format:%b %e %Y %I:%M %p" --color=never --format="tformat:%>|($i2)%C(yellow)%h %C(brightblue)%ad%C(auto)%d %s")
+
+		matches=$(echo "$stdin" | grep -P " [a-z0-9]{7}" | grep -P "^[^a-z0-9]{$i1}")
+
+		if [ -z "$matches" ]
+		then
+			break
+		fi
+
+		indent=$(($indent + 1))
+	done
+	i2=$((2 * $indent + 7))
+
+	# Get log with color.
+	stdin=$(git log --graph --branches --abbrev-commit --date="format:%b %e %Y %I:%M %p" --color=always --format="tformat:%>|($i2)%C(yellow)%h %C(brightblue)%ad%C(auto)%d %s")
+
+	# Determine delimiter which does not appear in the string.
+	DELIMITER_GENERATOR="date +%N"
+	DELIMITER=
+	while :
+	do
+		DELIMITER=$DELIMITER$($DELIMITER_GENERATOR)
+
+		matches=$(echo "$stdin" | grep $DELIMITER)
+
+		if [ -z "$matches" ]
+		then
+			break
+		fi
+	done
+
+	# Replace ^([^*]+)/ with \1$DELIMITER
+	while :
+	do
+		matches=$(echo "$stdin" | grep -P "^[^*]+/")
+
+		if [ -z "$matches" ]
+		then
+			break
+		fi
+
+		stdin=$(echo "$stdin" | sed "s/^\([^*]\+\)\//\1$DELIMITER/")
+	done
+
+	# Replace ^([^*]+)\\ with \1/
+	while :
+	do
+		matches=$(echo "$stdin" | grep -P "^[^*]+\\\\")
+
+		if [ -z "$matches" ]
+		then
+			break
+		fi
+
+		stdin=$(echo "$stdin" | sed "s/^\([^*]\+\)\\\\/\1\//")
+	done
+
+	# Replace ^([^*]+)$DELIMITER with \1\\
+	while :
+	do
+		matches=$(echo "$stdin" | grep -P "^[^*]+$DELIMITER")
+		# echo "$matches"
+
+		if [ -z "$matches" ]
+		then
+			break
+		fi
+
+		stdin=$(echo "$stdin" | sed "s/^\([^*]\+\)$DELIMITER/\1\\\\/")
+	done
+
+	# Reverse lines.
+	stdin=$(echo "$stdin" | tac)
+
+	echo "$stdin"
+}
+
+git_alias_lb
