@@ -1,0 +1,13 @@
+[blame]
+	date = format:%b %e %Y %I:%M %p
+[core]
+	pager =
+[format]
+	pretty = tformat:%C(yellow)%h %C(brightblue)%ad%C(auto)%d %s
+[log]
+	abbrevcommit = true
+	date = format:%b %e %Y %I:%M %p
+[merge]
+	conflictStyle = diff3
+[push]
+	autoSetupRemote = true
